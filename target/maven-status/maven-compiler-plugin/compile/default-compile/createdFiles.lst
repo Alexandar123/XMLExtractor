@@ -1,0 +1,6 @@
+com/extractor/xml/XMLExtractor.class
+com/extractor/xml/ExtractDataRequest$ExtractDataRequestBuilder.class
+com/extractor/xml/ExtractDataRequest.class
+com/extractor/xml/OpenApiConfig.class
+com/extractor/xml/XmlApplication.class
+com/extractor/xml/ExtractorController.class
