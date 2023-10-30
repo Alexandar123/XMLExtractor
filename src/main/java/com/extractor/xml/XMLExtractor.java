@@ -25,7 +25,7 @@ public class XMLExtractor {
 
     public boolean extractData(ExtractDataRequest request) {
         try {
-            //String inputFilePath = "/home/intv0016/Desktop/XMLExtractor/XMLExtractors/src/main/resources/test.xml";
+            String inputFilePath = "/home/intv0016/Desktop/XMLExtractor/XMLExtractors/src/main/resources/test.xml";
             String outputFilePath = generateOutputFilePath(request.getOutputFilePath());
 
             Document doc = loadXmlDocument(request.getInputFilePath());

@@ -1,6 +1,11 @@
 com/extractor/xml/XMLExtractor.class
+com/extractor/xml/ExcelController.class
 com/extractor/xml/ExtractDataRequest$ExtractDataRequestBuilder.class
-com/extractor/xml/ExtractDataRequest.class
+com/extractor/xml/model/ElementaProduct$ElementaProductBuilder.class
 com/extractor/xml/OpenApiConfig.class
-com/extractor/xml/XmlApplication.class
 com/extractor/xml/ExtractorController.class
+com/extractor/xml/ExtractDataRequest.class
+com/extractor/xml/model/ElementaProduct.class
+com/extractor/xml/XMLToCSV.class
+com/extractor/xml/model/ElementaXMLProduct.class
+com/extractor/xml/XmlApplication.class

@@ -1,0 +1,68 @@
+<products>
+    <elementaXMLProduct>
+        <numId>1</numId>
+        <parent>1011</parent>
+        <textId>BC108C</textId>
+        <naziv>Tranzistor NPN TO18</naziv>
+        <specifications>
+            <attribute name="Tip"/>
+            <value>NPN</value>
+            <attribute name="Kućište"/>
+            <value>TO18</value>
+        </specifications>
+        <opis>NPN 30V 0.1A 0.3W B:200-450, TO18</opis>
+        <cena>34.00</cena>
+        <vpCena>28.22</vpCena>
+        <netoCena>21.17</netoCena>
+        <rabat>25</rabat>
+        <akcijskaCena>0</akcijskaCena>
+        <akcijskiRabat>0</akcijskiRabat>
+        <ukupanRabat>0</ukupanRabat>
+        <lagerVp>4</lagerVp>
+        <paket>1</paket>
+        <unit>KOM</unit>
+        <barkod/>
+        <uvoznik>Elementa d.o.o., Subotica</uvoznik>
+        <proizvodjac>Kontel kft.</proizvodjac>
+        <zemljaPorekla>Kina</zemljaPorekla>
+        <zemljaUvoza>Kina</zemljaUvoza>
+        <link>https://www.elementa.rs/proizvod/7/tranzistor-npn-to18</link>
+        <uputstvo/>
+        <ocenaUsaglasenosti/>
+        <slika>https://www.elementa.rs/images/products/7/original/1.jpg</slika>
+        <slika2>https://www.elementa.rs/images/products/7/original/2.jpg</slika2>
+    </elementaXMLProduct>
+    <elementaXMLProduct>
+        <numId>2</numId>
+        <parent>1011</parent>
+        <textId>BC108C</textId>
+        <naziv>Tranzistor NPN TO18</naziv>
+        <specifications>
+            <attribute name="Tip"/>
+            <value>NPN</value>
+            <attribute name="Kućište"/>
+            <value>TO18</value>
+        </specifications>
+        <opis>NPN 30V 0.1A 0.3W B:200-450, TO18</opis>
+        <cena>34.00</cena>
+        <vpCena>28.22</vpCena>
+        <netoCena>21.17</netoCena>
+        <rabat>25</rabat>
+        <akcijskaCena>0</akcijskaCena>
+        <akcijskiRabat>0</akcijskiRabat>
+        <ukupanRabat>0</ukupanRabat>
+        <lagerVp>4</lagerVp>
+        <paket>1</paket>
+        <unit>KOM</unit>
+        <barkod/>
+        <uvoznik>Elementa d.o.o., Subotica</uvoznik>
+        <proizvodjac>Kontel kft.</proizvodjac>
+        <zemljaPorekla>Kina</zemljaPorekla>
+        <zemljaUvoza>Kina</zemljaUvoza>
+        <link>https://www.elementa.rs/proizvod/7/tranzistor-npn-to18</link>
+        <uputstvo/>
+        <ocenaUsaglasenosti/>
+        <slika>https://www.elementa.rs/images/products/7/original/1.jpg</slika>
+        <slika2>https://www.elementa.rs/images/products/7/original/2.jpg</slika2>
+    </elementaXMLProduct>
+</products>
