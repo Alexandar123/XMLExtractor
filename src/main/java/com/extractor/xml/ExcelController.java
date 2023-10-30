@@ -108,24 +108,6 @@ public class ExcelController {
     }
 
     public List<List<String>> getCSVData(List<ElementaXMLProduct> elementaXMLProducts) {
-//        elementaXMLProducts.forEach(elementaXMLProduct -> {
-//            csvData.add(Arrays.asList(
-//                    String.valueOf(elementaXMLProduct.getSkuId()), "", "Default", "simple", elementaXMLProduct.getFullCategoryPath(), "",
-//                    elementaXMLProduct.getNaziv(), "elementaXMLProduct.getOpis()", "", "", "1", "Taxable Goods",
-//                    "Search,Catalog", String.valueOf(elementaXMLProduct.getCena()), "28", "", "", "",
-//                    "", "", "", "", "", "",
-//                    "", "", "", "", "", "",
-//                    "", "", "", "", "", "",
-//                    "", elementaXMLProduct.getZemljaPorekla(), "", String.valueOf(elementaXMLProduct.getLagerVp()), "0", "1",
-//                    "0", "0", "1", "1", "0", "0",
-//                    "1", "1", "", "1", "0", "1",
-//                    "1", "0", "1", "0", "0", "1",
-//                    "0", "1", "", "", "", "",
-//                    "", "", "", elementaXMLProduct.getProizvodjac(), "", elementaXMLProduct.getProizvodjac(),
-//                    getSupplierCode(elementaXMLProduct.getSifraDobavljaca()), "", elementaXMLProduct.getLink(), "", "", "", "", getImages(elementaXMLProduct)
-//            ));
-//        });
-
         return elementaXMLProducts.stream()
                 .skip(6)
                 .limit(50) // Limit the stream to the first 50 elements
@@ -258,7 +240,7 @@ public class ExcelController {
                 }
             }
         }
-        return null; // If "Tip" attribute is not found
+        return "";
     }
 
     private String getImage(String slika) {
