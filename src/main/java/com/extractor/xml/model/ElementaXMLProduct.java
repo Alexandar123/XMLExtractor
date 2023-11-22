@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -36,4 +38,8 @@ public class ElementaXMLProduct {
     private String slika6;
     private String fullCategoryPath;
     private String tipProizvoda;
+    private String ocenaUsaglasenosti;
+    private String uputstvo;
+    private String barkod;
+    private Map<String, String> specifications;
 }

@@ -6,6 +6,7 @@ com/extractor/xml/OpenApiConfig.class
 com/extractor/xml/ExtractorController.class
 com/extractor/xml/ExtractDataRequest.class
 com/extractor/xml/model/ElementaProduct.class
+com/extractor/xml/util/ElementaUtil.class
 com/extractor/xml/XMLToCSV.class
 com/extractor/xml/model/ElementaXMLProduct.class
 com/extractor/xml/XmlApplication.class
