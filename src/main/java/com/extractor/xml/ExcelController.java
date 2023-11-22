@@ -9,7 +9,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,11 +27,11 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +39,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.extractor.xml.util.ElementaUtil.checkManufactureData;
@@ -43,7 +46,6 @@ import static com.extractor.xml.util.ElementaUtil.constructUrlKey;
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsDouble;
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsInteger;
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsString;
-import static com.extractor.xml.util.ElementaUtil.getDesktopPath;
 import static com.extractor.xml.util.ElementaUtil.getImages;
 import static com.extractor.xml.util.ElementaUtil.replaceDiacritics;
 import static com.extractor.xml.util.ElementaUtil.sanitazeAttributeName;
@@ -62,11 +64,12 @@ public class ExcelController {
             "Obavezna pravila: E-mall fajl mora biti pripremljen sa <b>SKU</b>, <b>ElementaId</b> i <b>category putanjama</b> prema kojima ce se Elementa proizvodi uvezati u sistem i to sledecim redom: \n" +
                     "1. SKU \n 2. ElementaId \n 3. Category path \n" +
                     "<br><br><b>Elementa fajl treba da bude pripremljen bez naslova(header-a)</b>")
-    public void generateCsv(@RequestParam("emall_with_SKU") MultipartFile emallWithSKU,
-                            @RequestParam("elementa_XML_file") MultipartFile elementaXMLFile,
-                            @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "products") String fileName,
-                            @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog elementa I.E. ako je skip 3 preskacu se prva tri elementa iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
-                            @Parameter(description = "Limit vrednost se odnosi na broj elemenata koje je potrebno obraditi. I.E. ako je limit 3 obradice se iz celog fajla samo tri elementa. Default vrednost -1 znaci da nema limita.") @RequestParam(value = "limit", required = false, defaultValue = "-1") Integer limit) {
+    public ResponseEntity<ByteArrayResource> generateCsvWithResponse(@RequestParam("emall_with_SKU") MultipartFile emallWithSKU,
+                                                                     @RequestParam("elementa_XML_file") MultipartFile elementaXMLFile,
+                                                                     @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "products") String fileName,
+                                                                     @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog elementa I.E. ako je skip 3 preskacu se prva tri elementa iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
+                                                                     @Parameter(description = "Limit vrednost se odnosi na broj elemenata koje je potrebno obraditi. I.E. ako je limit 3 obradice se iz celog fajla samo tri elementa. Default vrednost -1 znaci da nema limita.") @RequestParam(value = "limit", required = false, defaultValue = "-1") Integer limit) {
+        log.info("CSV generation started....");
         List<ElementaXMLProduct> elementaXMLProductList = getElementaXMLProducts(elementaXMLFile);
         List<ElementaXMLProduct> elementaXMLProducts = updateElementaData(elementaXMLProductList, emallWithSKU);
 
@@ -77,9 +80,9 @@ public class ExcelController {
         log.info("csvData size = " + csvData.size());
 
         String fullFileName = fileName + "-" + LocalDateTime.now() + ".csv";
-        Path filePath = Path.of(Objects.requireNonNull(getDesktopPath()), fullFileName);
-        try (BufferedWriter fileWriter = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
-            // Write the header to the CSV file
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {
+
             fileWriter.write(csvHeader.stream()
                     .map(header -> "\"" + header + "\"")
                     .collect(Collectors.joining(",")));
@@ -92,10 +95,61 @@ public class ExcelController {
                 fileWriter.write(String.join(",", sanitizedData));
                 fileWriter.newLine();
             }
+
+            byte[] fileContent = baos.toByteArray();
+
+            return ResponseEntity.ok()
+                    .headers(createHeaders(fullFileName))
+                    .contentLength(fileContent.length)
+                    .contentType(MediaType.parseMediaType("application/csv"))
+                    .body(new ByteArrayResource(fileContent));
+
         } catch (IOException e) {
-            log.error("Error during generating csv: " + e.getMessage());
+            log.error("Error during generating CSV: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
+//
+//    @PostMapping(value = "/elementa/generate-csv", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+//    @Operation(summary = "Convert products from elementa format into E-mall Magento specific csv file.", description =
+//            "Obavezna pravila: E-mall fajl mora biti pripremljen sa <b>SKU</b>, <b>ElementaId</b> i <b>category putanjama</b> prema kojima ce se Elementa proizvodi uvezati u sistem i to sledecim redom: \n" +
+//                    "1. SKU \n 2. ElementaId \n 3. Category path \n" +
+//                    "<br><br><b>Elementa fajl treba da bude pripremljen bez naslova(header-a)</b>")
+//    public void generateCsv(@RequestParam("emall_with_SKU") MultipartFile emallWithSKU,
+//                            @RequestParam("elementa_XML_file") MultipartFile elementaXMLFile,
+//                            @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "products") String fileName,
+//                            @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog elementa I.E. ako je skip 3 preskacu se prva tri elementa iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
+//                            @Parameter(description = "Limit vrednost se odnosi na broj elemenata koje je potrebno obraditi. I.E. ako je limit 3 obradice se iz celog fajla samo tri elementa. Default vrednost -1 znaci da nema limita.") @RequestParam(value = "limit", required = false, defaultValue = "-1") Integer limit) {
+//        List<ElementaXMLProduct> elementaXMLProductList = getElementaXMLProducts(elementaXMLFile);
+//        List<ElementaXMLProduct> elementaXMLProducts = updateElementaData(elementaXMLProductList, emallWithSKU);
+//
+//        List<String> csvHeader = getCSVHeaders(elementaXMLProducts);
+//        List<List<String>> csvData = getCSVData(elementaXMLProducts, csvHeader, skip, limit);
+//
+//        log.info("csvData = " + csvData.get(0));
+//        log.info("csvData size = " + csvData.size());
+//
+//        String fullFileName = fileName + "-" + LocalDateTime.now() + ".csv";
+//        Path filePath = Path.of(Objects.requireNonNull(getDesktopPath()), fullFileName);
+//        try (BufferedWriter fileWriter = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
+//            // Write the header to the CSV file
+//            fileWriter.write(csvHeader.stream()
+//                    .map(header -> "\"" + header + "\"")
+//                    .collect(Collectors.joining(",")));
+//            fileWriter.newLine();
+//
+//            for (List<String> data : csvData) {
+//                List<String> sanitizedData = data.stream()
+//                        .map(value -> "\"" + value.replace("\"", "'") + "\"")
+//                        .collect(Collectors.toList());
+//                fileWriter.write(String.join(",", sanitizedData));
+//                fileWriter.newLine();
+//            }
+//        } catch (IOException e) {
+//            log.error("Error during generating csv: " + e.getMessage());
+//        }
+//    }
 
     public List<List<String>> getCSVData(List<ElementaXMLProduct> elementaXMLProducts, List<String> csvHeader, int skip, int limit) {
         if (limit == -1) {
@@ -348,127 +402,6 @@ public class ExcelController {
         return elementaProducts;
     }
 
-//    public static List<ElementaXMLProduct> getElementaXMLProducts(MultipartFile elementaXMLFile) {
-//        List<ElementaXMLProduct> elementaXMLProductList = new ArrayList<>();
-//        File xmlFile = new File("/home/intv0016/Downloads/dist_proizvodi.xml");
-//        try {
-//            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-//            DocumentBuilder builder = factory.newDocumentBuilder();
-//            Document document = builder.parse(xmlFile);
-//
-//            Element root = document.getDocumentElement();
-//            NodeList productListNodes = root.getElementsByTagName("product");
-//
-//            for (int productIndex = 0; productIndex < productListNodes.getLength(); productIndex++) {
-//                Element productElement = (Element) productListNodes.item(productIndex);
-//                ElementaXMLProduct elementaXMLProduct = new ElementaXMLProduct();
-//                elementaXMLProduct.setTipProizvoda(getTipFromSpecifications(productElement));
-//
-//                elementaXMLProduct.setSpecifications(getSpecifications(productElement));
-//
-//                NodeList productChildren = productElement.getChildNodes();
-//                for (int i = 0; i < productChildren.getLength(); i++) {
-//                    Node node = productChildren.item(i);
-//
-//                    if (node.getNodeType() == Node.ELEMENT_NODE) {
-//                        Element element = (Element) node;
-//                        String nodeName = element.getNodeName();
-//                        String nodeValue = element.getTextContent();
-//
-//                        switch (nodeName) {
-//                            case "numId":
-//                                elementaXMLProduct.setElementaId(Integer.parseInt(nodeValue));
-//                                break;
-//                            case "naziv":
-//                                elementaXMLProduct.setNaziv(nodeValue);
-//                                break;
-//                            case "opis":
-//                                elementaXMLProduct.setOpis(nodeValue);
-//                                break;
-//                            case "uvoznik":
-//                                elementaXMLProduct.setUvoznik(nodeValue);
-//                                break;
-//                            case "proizvodjac":
-//                                elementaXMLProduct.setProizvodjac(nodeValue);
-//                                break;
-//                            case "zemljaPorekla":
-//                                elementaXMLProduct.setZemljaPorekla(nodeValue);
-//                                break;
-//                            case "zemljaUvoza":
-//                                elementaXMLProduct.setZemljaUvoza(nodeValue);
-//                                break;
-//                            case "link":
-//                                elementaXMLProduct.setLink(nodeValue);
-//                                break;
-//                            case "lagerVp":
-//                                elementaXMLProduct.setLagerVp(Integer.parseInt(nodeValue));
-//                                break;
-//                            case "sifraDobavljaca":
-//                                elementaXMLProduct.setSifraDobavljaca(nodeValue);
-//                                break;
-//                            case "slika":
-//                                elementaXMLProduct.setSlika(nodeValue);
-//                                break;
-//                            case "slika2":
-//                                elementaXMLProduct.setSlika2(nodeValue);
-//                                break;
-//                            case "slika3":
-//                                elementaXMLProduct.setSlika3(nodeValue);
-//                                break;
-//                            case "slika4":
-//                                elementaXMLProduct.setSlika4(nodeValue);
-//                                break;
-//                            case "slika5":
-//                                elementaXMLProduct.setSlika5(nodeValue);
-//                                break;
-//                            case "slika6":
-//                                elementaXMLProduct.setSlika6(nodeValue);
-//                                break;
-//                            case "cena":
-//                                elementaXMLProduct.setCena(Double.valueOf(nodeValue));
-//                                break;
-//                            case "vpCena":
-//                                elementaXMLProduct.setVpCena(Double.valueOf(nodeValue));
-//                                break;
-//                            case "netoCena":
-//                                elementaXMLProduct.setNetoCena(Double.valueOf(nodeValue));
-//                                break;
-//                            case "akcijskaCena":
-//                                elementaXMLProduct.setAkcijskaCena(Double.valueOf(nodeValue));
-//                                break;
-//                            case "rabat":
-//                                elementaXMLProduct.setRabat(Double.valueOf(nodeValue));
-//                                break;
-//                            case "akcijskiRabat":
-//                                elementaXMLProduct.setAkcijskiRabat(Double.valueOf(nodeValue));
-//                                break;
-//                            case "ukupanRabat":
-//                                elementaXMLProduct.setUkupanRabat(Double.valueOf(nodeValue));
-//                                break;
-//                            case "unit":
-//                                elementaXMLProduct.setUnit(nodeValue);
-//                                break;
-//                            case "ocenaUsaglasenosti":
-//                                elementaXMLProduct.setOcenaUsaglasenosti(nodeValue);
-//                                break;
-//                            case "uputstvo":
-//                                elementaXMLProduct.setUputstvo(nodeValue);
-//                                break;
-//                            case "barkod":
-//                                elementaXMLProduct.setBarkod(nodeValue);
-//                                break;
-//                        }
-//                    }
-//                }
-//                elementaXMLProductList.add(elementaXMLProduct);
-//            }
-//        } catch (Exception e) {
-//            log.error("Error during read data from elementa xml file: " + e.getMessage());
-//        }
-//        sanitizeCountry(elementaXMLProductList);
-//        return elementaXMLProductList;
-//    }
-
     public static List<ElementaXMLProduct> getElementaXMLProducts(MultipartFile elementaXMLFile) {
         List<ElementaXMLProduct> elementaXMLProductList = new ArrayList<>();
 
@@ -668,5 +601,11 @@ public class ExcelController {
             }
         }
         return elementaXMLProducts;
+    }
+
+    private HttpHeaders createHeaders(String fileName) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+        return headers;
     }
 }
