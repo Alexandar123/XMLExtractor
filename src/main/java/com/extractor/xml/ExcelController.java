@@ -70,11 +70,11 @@ public class ExcelController {
                                                                      @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog elementa I.E. ako je skip 3 preskacu se prva tri elementa iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
                                                                      @Parameter(description = "Limit vrednost se odnosi na broj elemenata koje je potrebno obraditi. I.E. ako je limit 3 obradice se iz celog fajla samo tri elementa. Default vrednost -1 znaci da nema limita.") @RequestParam(value = "limit", required = false, defaultValue = "-1") Integer limit) {
         log.info("CSV generation started....");
-        List<ElementaXMLProduct> elementaXMLProductList = getElementaXMLProducts(elementaXMLFile);
-        List<ElementaXMLProduct> elementaXMLProducts = updateElementaData(elementaXMLProductList, emallWithSKU);
+        List<ElementaXMLProduct> elementaXMLProducts = getElementaXMLProducts(elementaXMLFile);
+        List<ElementaXMLProduct> updateElementaData = updateElementaData(elementaXMLProducts, emallWithSKU);
 
-        List<String> csvHeader = getCSVHeaders(elementaXMLProducts);
-        List<List<String>> csvData = getCSVData(elementaXMLProducts, csvHeader, skip, limit);
+        List<String> csvHeader = getCSVHeaders(updateElementaData);
+        List<List<String>> csvData = getCSVData(updateElementaData, csvHeader, skip, limit);
 
         log.info("csvData = " + csvData.get(0));
         log.info("csvData size = " + csvData.size());
@@ -110,52 +110,11 @@ public class ExcelController {
         }
     }
 
-//
-//    @PostMapping(value = "/elementa/generate-csv", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-//    @Operation(summary = "Convert products from elementa format into E-mall Magento specific csv file.", description =
-//            "Obavezna pravila: E-mall fajl mora biti pripremljen sa <b>SKU</b>, <b>ElementaId</b> i <b>category putanjama</b> prema kojima ce se Elementa proizvodi uvezati u sistem i to sledecim redom: \n" +
-//                    "1. SKU \n 2. ElementaId \n 3. Category path \n" +
-//                    "<br><br><b>Elementa fajl treba da bude pripremljen bez naslova(header-a)</b>")
-//    public void generateCsv(@RequestParam("emall_with_SKU") MultipartFile emallWithSKU,
-//                            @RequestParam("elementa_XML_file") MultipartFile elementaXMLFile,
-//                            @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "products") String fileName,
-//                            @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog elementa I.E. ako je skip 3 preskacu se prva tri elementa iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
-//                            @Parameter(description = "Limit vrednost se odnosi na broj elemenata koje je potrebno obraditi. I.E. ako je limit 3 obradice se iz celog fajla samo tri elementa. Default vrednost -1 znaci da nema limita.") @RequestParam(value = "limit", required = false, defaultValue = "-1") Integer limit) {
-//        List<ElementaXMLProduct> elementaXMLProductList = getElementaXMLProducts(elementaXMLFile);
-//        List<ElementaXMLProduct> elementaXMLProducts = updateElementaData(elementaXMLProductList, emallWithSKU);
-//
-//        List<String> csvHeader = getCSVHeaders(elementaXMLProducts);
-//        List<List<String>> csvData = getCSVData(elementaXMLProducts, csvHeader, skip, limit);
-//
-//        log.info("csvData = " + csvData.get(0));
-//        log.info("csvData size = " + csvData.size());
-//
-//        String fullFileName = fileName + "-" + LocalDateTime.now() + ".csv";
-//        Path filePath = Path.of(Objects.requireNonNull(getDesktopPath()), fullFileName);
-//        try (BufferedWriter fileWriter = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
-//            // Write the header to the CSV file
-//            fileWriter.write(csvHeader.stream()
-//                    .map(header -> "\"" + header + "\"")
-//                    .collect(Collectors.joining(",")));
-//            fileWriter.newLine();
-//
-//            for (List<String> data : csvData) {
-//                List<String> sanitizedData = data.stream()
-//                        .map(value -> "\"" + value.replace("\"", "'") + "\"")
-//                        .collect(Collectors.toList());
-//                fileWriter.write(String.join(",", sanitizedData));
-//                fileWriter.newLine();
-//            }
-//        } catch (IOException e) {
-//            log.error("Error during generating csv: " + e.getMessage());
-//        }
-//    }
-
     public List<List<String>> getCSVData(List<ElementaXMLProduct> elementaXMLProducts, List<String> csvHeader, int skip, int limit) {
         if (limit == -1) {
             return elementaXMLProducts.stream()
                     .skip(skip)
-                    .filter(elementaXMLProduct -> elementaXMLProduct.getSkuId() >= 129619 && elementaXMLProduct.getFullCategoryPath() != null && !elementaXMLProduct.getFullCategoryPath().contains("#N/A"))
+                    .filter(elementaXMLProduct -> elementaXMLProduct.getFullCategoryPath() != null && !elementaXMLProduct.getFullCategoryPath().contains("#N/A"))
                     .map(item -> mapData(item, csvHeader))
                     .collect(Collectors.toList());
         }
