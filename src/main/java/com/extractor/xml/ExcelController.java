@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 
 import static com.extractor.xml.util.ElementaUtil.checkManufactureData;
 import static com.extractor.xml.util.ElementaUtil.constructUrlKey;
-import static com.extractor.xml.util.ElementaUtil.getCellValueAsDouble;
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsInteger;
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsString;
 import static com.extractor.xml.util.ElementaUtil.getImages;
@@ -83,21 +82,12 @@ public class ExcelController {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              BufferedWriter fileWriter = new BufferedWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {
 
-            fileWriter.write(csvHeader.stream()
-                    .map(header -> "\"" + header + "\"")
-                    .collect(Collectors.joining(",")));
-            fileWriter.newLine();
-
+            writeCsvToFile(fileWriter, csvHeader);
             for (List<String> data : csvData) {
-                List<String> sanitizedData = data.stream()
-                        .map(value -> "\"" + value.replace("\"", "'") + "\"")
-                        .collect(Collectors.toList());
-                fileWriter.write(String.join(",", sanitizedData));
-                fileWriter.newLine();
+                writeCsvToFile(fileWriter, data);
             }
 
             byte[] fileContent = baos.toByteArray();
-
             return ResponseEntity.ok()
                     .headers(createHeaders(fullFileName))
                     .contentLength(fileContent.length)
@@ -110,6 +100,13 @@ public class ExcelController {
         }
     }
 
+    private void writeCsvToFile(BufferedWriter fileWriter, List<String> data) throws IOException {
+        fileWriter.write(data.stream()
+                .map(value -> "\"" + value.replace("\"", "'") + "\"")
+                .collect(Collectors.joining(",")));
+        fileWriter.newLine();
+    }
+
     public List<List<String>> getCSVData(List<ElementaXMLProduct> elementaXMLProducts, List<String> csvHeader, int skip, int limit) {
         if (limit == -1) {
             return elementaXMLProducts.stream()
@@ -119,9 +116,9 @@ public class ExcelController {
                     .collect(Collectors.toList());
         }
         return elementaXMLProducts.stream()
+                .filter(elementaXMLProduct -> elementaXMLProduct.getFullCategoryPath() != null && !elementaXMLProduct.getFullCategoryPath().contains("#N/A"))
                 .skip(skip)
                 .limit(limit)
-                .filter(elementaXMLProduct -> elementaXMLProduct.getFullCategoryPath() != null && !elementaXMLProduct.getFullCategoryPath().contains("#N/A"))
                 .map(item -> mapData(item, csvHeader))
                 .collect(Collectors.toList());
     }
@@ -338,17 +335,12 @@ public class ExcelController {
                     elementaProducts.add(
                             ElementaProduct.builder()
                                     .skuId(getCellValueAsInteger(row.getCell(0)))
-                                    .elementaId(getCellValueAsInteger(row.getCell(5)))
                                     .name(getCellValueAsString(row.getCell(1)))
-                                    .sifraDobavljaca(getCellValueAsString(row.getCell(2)))
-                                    .uvoznik(getCellValueAsString(row.getCell(22)))
-                                    .zemljaPorekla(getCellValueAsString(row.getCell(24)))
-                                    .nadredjenaKategorija(getCellValueAsString(row.getCell(7)))
-                                    .primarnaKategorija(getCellValueAsString(row.getCell(9)))
-                                    .sekundarnaKategorija(getCellValueAsString(row.getCell(11)))
-                                    .maloprodajnaCena(getCellValueAsDouble(row.getCell(31)))
-                                    .nabavnaCena(getCellValueAsDouble(row.getCell(32)))
-                                    .rabat(getCellValueAsDouble(row.getCell(33)))
+                                    .elementaId(getCellValueAsInteger(row.getCell(2)))
+                                    .nadredjenaKategorija(getCellValueAsString(row.getCell(4)))
+                                    .primarnaKategorija(getCellValueAsString(row.getCell(6)))
+                                    .sekundarnaKategorija(getCellValueAsString(row.getCell(8)))
+                                    .sifraDobavljaca(getCellValueAsString(row.getCell(9)))
                                     .build());
                 }
                 sanitizeCategoryFullPath(elementaProducts);
@@ -359,48 +351,6 @@ public class ExcelController {
             log.error("Error during read data from excel: " + e.getMessage());
         }
         return elementaProducts;
-    }
-
-    public static List<ElementaXMLProduct> getElementaXMLProducts(MultipartFile elementaXMLFile) {
-        List<ElementaXMLProduct> elementaXMLProductList = new ArrayList<>();
-
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse(elementaXMLFile.getInputStream());
-
-            Element root = document.getDocumentElement();
-            NodeList productListNodes = root.getElementsByTagName("product");
-
-            for (int productIndex = 0; productIndex < productListNodes.getLength(); productIndex++) {
-                Element productElement = (Element) productListNodes.item(productIndex);
-                ElementaXMLProduct elementaXMLProduct = createProductFromElement(productElement);
-                elementaXMLProductList.add(elementaXMLProduct);
-            }
-
-        } catch (Exception e) {
-            log.error("Error during read data from Elementa xml file: " + e.getMessage());
-        }
-
-        sanitizeCountry(elementaXMLProductList);
-        return elementaXMLProductList;
-    }
-
-    private static ElementaXMLProduct createProductFromElement(Element productElement) {
-        ElementaXMLProduct elementaXMLProduct = new ElementaXMLProduct();
-        elementaXMLProduct.setTipProizvoda(getTipFromSpecifications(productElement));
-        elementaXMLProduct.setSpecifications(getSpecifications(productElement));
-
-        NodeList productChildren = productElement.getChildNodes();
-        for (int i = 0; i < productChildren.getLength(); i++) {
-            Node node = productChildren.item(i);
-
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                processProductNode(elementaXMLProduct, (Element) node);
-            }
-        }
-
-        return elementaXMLProduct;
     }
 
     private static void processProductNode(ElementaXMLProduct elementaXMLProduct, Element element) {
@@ -491,6 +441,48 @@ public class ExcelController {
         }
     }
 
+    public static List<ElementaXMLProduct> getElementaXMLProducts(MultipartFile elementaXMLFile) {
+        List<ElementaXMLProduct> elementaXMLProductList = new ArrayList<>();
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(elementaXMLFile.getInputStream());
+
+            Element root = document.getDocumentElement();
+            NodeList productListNodes = root.getElementsByTagName("product");
+
+            for (int productIndex = 0; productIndex < productListNodes.getLength(); productIndex++) {
+                Element productElement = (Element) productListNodes.item(productIndex);
+                ElementaXMLProduct elementaXMLProduct = createProductFromElement(productElement);
+                elementaXMLProductList.add(elementaXMLProduct);
+            }
+
+        } catch (Exception e) {
+            log.error("Error during read data from Elementa xml file: " + e.getMessage());
+        }
+
+        sanitizeCountry(elementaXMLProductList);
+        return elementaXMLProductList;
+    }
+
+    private static ElementaXMLProduct createProductFromElement(Element productElement) {
+        ElementaXMLProduct elementaXMLProduct = new ElementaXMLProduct();
+        elementaXMLProduct.setTipProizvoda(getTipFromSpecifications(productElement));
+        elementaXMLProduct.setSpecifications(getSpecifications(productElement));
+
+        NodeList productChildren = productElement.getChildNodes();
+        for (int i = 0; i < productChildren.getLength(); i++) {
+            Node node = productChildren.item(i);
+
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                processProductNode(elementaXMLProduct, (Element) node);
+            }
+        }
+
+        return elementaXMLProduct;
+    }
+
     public static String getTipFromSpecifications(Element productElement) {
         NodeList specificationsList = productElement.getElementsByTagName("specifications");
         for (int i = 0; i < specificationsList.getLength(); i++) {
@@ -555,6 +547,7 @@ public class ExcelController {
                     xmlProduct.setSkuId(product.getSkuId());
                     xmlProduct.setFullCategoryPath(
                             setFullCategory(product.getNadredjenaKategorija(), product.getPrimarnaKategorija(), product.getSekundarnaKategorija()));
+                    xmlProduct.setNaziv(product.getName());
                     break;
                 }
             }
