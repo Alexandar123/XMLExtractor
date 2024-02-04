@@ -1,7 +1,7 @@
 package com.extractor.xml.util;
 
 import com.extractor.xml.model.ElementaProduct;
-import com.extractor.xml.model.ElementaXMLProduct;
+import com.extractor.xml.model.EmallProduct;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -58,7 +58,7 @@ public class ElementaUtil {
 //        }
 //    }
 
-    public static void sanitizeCountry(List<ElementaXMLProduct> elementaProducts) {
+    public static void sanitizeCountry(List<ElementaProduct> elementaProducts) {
         Map<String, String> countryMappings = new HashMap<>();
         countryMappings.put("kina", "Kina");
         countryMappings.put("nemačka", "Nemačka");
@@ -71,7 +71,7 @@ public class ElementaUtil {
         countryMappings.put("taiwan", "Tajvan");
         countryMappings.put("norveska", "Norveška");
 
-        for (ElementaXMLProduct elementaProduct : elementaProducts) {
+        for (ElementaProduct elementaProduct : elementaProducts) {
             String originalCountry = elementaProduct.getZemljaPorekla().toLowerCase();
             String englishCountry = countryMappings.get(originalCountry);
 
@@ -82,13 +82,13 @@ public class ElementaUtil {
         }
     }
 
-    public static void sanitizeCategoryFullPath(List<ElementaProduct> elementaProducts) {
-        for (ElementaProduct elementaProduct : elementaProducts) {
-            elementaProduct.setFullCategoryPath(
+    public static void sanitizeCategoryFullPath(List<EmallProduct> products) {
+        for (EmallProduct product : products) {
+            product.setFullCategoryPath(
                     "Default Category/Shop/" +
-                            elementaProduct.getNadredjenaKategorija() + "/" +
-                            elementaProduct.getPrimarnaKategorija() + "/" +
-                            elementaProduct.getSekundarnaKategorija()
+                            product.getNadredjenaKategorija() + "/" +
+                            product.getPrimarnaKategorija() + "/" +
+                            product.getSekundarnaKategorija()
             );
         }
     }
@@ -182,7 +182,7 @@ public class ElementaUtil {
         return null; // Unsupported OS
     }
 
-    public static String getImages(ElementaXMLProduct elementaXMLProduct) {
+    public static String getImages(ElementaProduct elementaXMLProduct) {
         List<String> imageUrls = new ArrayList<>();
 
         if (elementaXMLProduct.getSlika() != null) {

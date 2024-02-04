@@ -1,34 +1,45 @@
 package com.extractor.xml.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 public class ElementaProduct {
     private int skuId;
     private int elementaId;
-    private String name;
+    private String opis;
+    private String naziv;
     private String uvoznik;
+    private String proizvodjac;
     private String zemljaPorekla;
+    private String zemljaUvoza;
+    private String link;
     private String sifraDobavljaca;
-    //1
-    private String nadredjenaKategorija;
-    //2
-    private String primarnaKategorija;
-    //3
-    private String sekundarnaKategorija;
+    private String unit;
 
-    private Double nabavnaCena;
-    private Double maloprodajnaCena;
+    private Double cena;
+    private Double vpCena;
+    private Double netoCena;
+    private Double akcijskaCena;
     private Double rabat;
-
+    private Double akcijskiRabat;
+    private Double ukupanRabat;
+    private int lagerVp;
+    private String slika;
+    private String slika2;
+    private String slika3;
+    private String slika4;
+    private String slika5;
+    private String slika6;
     private String fullCategoryPath;
-    private List<String> images;
+    private String tipProizvoda;
+    private String ocenaUsaglasenosti;
+    private String uputstvo;
+    private String barkod;
+    private Map<String, String> specifications;
 }
