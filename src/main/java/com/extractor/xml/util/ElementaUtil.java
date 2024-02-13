@@ -1,7 +1,7 @@
 package com.extractor.xml.util;
 
 import com.extractor.xml.model.ElementaProduct;
-import com.extractor.xml.model.ElementaXMLProduct;
+import com.extractor.xml.model.EmallProduct;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -16,77 +16,79 @@ import java.util.Map;
 @UtilityClass
 public class ElementaUtil {
 
-    public static void santizeCountryToSrb(List<ElementaXMLProduct> elementaProducts) {
+//    public static void sanitizeCountry(List<ElementaXMLProduct> elementaProducts) {
+//        // Create a mapping of Serbian country names to English names, all in lowercase
+//        Map<String, String> countryMappings = new HashMap<>();
+//        countryMappings.put("kina", "China");
+//        countryMappings.put("belgija", "Belgium");
+//        countryMappings.put("nemačka", "Germany");
+//        countryMappings.put("mađarska", "Hungary");
+//        countryMappings.put("madarska", "Hungary");
+//        countryMappings.put("sad", "United States");
+//        countryMappings.put("engleska", "United Kingdom");
+//        countryMappings.put("srbija", "Serbia");
+//        countryMappings.put("češka", "Czech Republic");
+//        countryMappings.put("taiwan", "Taiwan, Province of China");
+//        countryMappings.put("bugarska", "Bulgaria");
+//        countryMappings.put("malezija", "Malaysia");
+//        countryMappings.put("poljska", "Poland");
+//        countryMappings.put("vijetnam", "Vietnam");
+//        countryMappings.put("turska", "Turkey");
+//        countryMappings.put("svajcarska", "Switzerland");
+//        countryMappings.put("švajcarska", "Switzerland");
+//        countryMappings.put("slovenija", "Slovenia");
+//        countryMappings.put("japan", "Japan");
+//        countryMappings.put("italija", "Italy");
+//        countryMappings.put("holandija", "Netherlands");
+//        countryMappings.put("indonezija", "Indonesia");
+//        countryMappings.put("norveška", "Norway");
+//        countryMappings.put("francuska", "France");
+//        countryMappings.put("austrija", "Austria");
+//        countryMappings.put("tajland", "Thailand");
+//        countryMappings.put("rusija", "Russia");
+//
+//        for (ElementaXMLProduct elementaProduct : elementaProducts) {
+//            String originalCountry = elementaProduct.getZemljaPorekla().toLowerCase();
+//            String englishCountry = countryMappings.get(originalCountry);
+//
+//            if (englishCountry != null) {
+//                elementaProduct.setZemljaPorekla(englishCountry);
+//                elementaProduct.setZemljaUvoza(englishCountry);
+//            }
+//        }
+//    }
+
+    public static void sanitizeCountry(List<ElementaProduct> elementaProducts) {
         Map<String, String> countryMappings = new HashMap<>();
         countryMappings.put("kina", "Kina");
         countryMappings.put("nemačka", "Nemačka");
         countryMappings.put("nemacka", "Nemačka");
         countryMappings.put("madarska", "Mađarska");
         countryMappings.put("usa", "Sjedinjene Države");
+        countryMappings.put("sad", "Sjedinjene Države");
+        countryMappings.put("vietnam", "Vijetnam");
         countryMappings.put("engleska", "Ujedinjeno Kraljevstvo");
         countryMappings.put("taiwan", "Tajvan");
         countryMappings.put("norveska", "Norveška");
 
-        for (ElementaXMLProduct elementaProduct : elementaProducts) {
-            String originalCountry = elementaProduct.getZemljaPorekla().toLowerCase();
-            String englishCountry = countryMappings.get(originalCountry);
-
-            if (englishCountry != null) {
-                elementaProduct.setZemljaPorekla(englishCountry);
-                elementaProduct.setZemljaUvoza(englishCountry);
-            }
-        }
-    }
-
-    public static void sanitizeCountry(List<ElementaXMLProduct> elementaProducts) {
-        // Create a mapping of Serbian country names to English names, all in lowercase
-        Map<String, String> countryMappings = new HashMap<>();
-        countryMappings.put("kina", "China");
-        countryMappings.put("belgija", "Belgium");
-        countryMappings.put("nemačka", "Germany");
-        countryMappings.put("mađarska", "Hungary");
-        countryMappings.put("madarska", "Hungary");
-        countryMappings.put("sad", "United States");
-        countryMappings.put("engleska", "United Kingdom");
-        countryMappings.put("srbija", "Serbia");
-        countryMappings.put("češka", "Czech Republic");
-        countryMappings.put("taiwan", "Taiwan, Province of China");
-        countryMappings.put("bugarska", "Bulgaria");
-        countryMappings.put("malezija", "Malaysia");
-        countryMappings.put("poljska", "Poland");
-        countryMappings.put("vijetnam", "Vietnam");
-        countryMappings.put("turska", "Turkey");
-        countryMappings.put("svajcarska", "Switzerland");
-        countryMappings.put("švajcarska", "Switzerland");
-        countryMappings.put("slovenija", "Slovenia");
-        countryMappings.put("japan", "Japan");
-        countryMappings.put("italija", "Italy");
-        countryMappings.put("holandija", "Netherlands");
-        countryMappings.put("indonezija", "Indonesia");
-        countryMappings.put("norveška", "Norway");
-        countryMappings.put("francuska", "France");
-        countryMappings.put("austrija", "Austria");
-        countryMappings.put("tajland", "Thailand");
-        countryMappings.put("rusija", "Russia");
-
-        for (ElementaXMLProduct elementaProduct : elementaProducts) {
-            String originalCountry = elementaProduct.getZemljaPorekla().toLowerCase();
-            String englishCountry = countryMappings.get(originalCountry);
-
-            if (englishCountry != null) {
-                elementaProduct.setZemljaPorekla(englishCountry);
-                elementaProduct.setZemljaUvoza(englishCountry);
-            }
-        }
-    }
-
-    public static void sanitizeCategoryFullPath(List<ElementaProduct> elementaProducts) {
         for (ElementaProduct elementaProduct : elementaProducts) {
-            elementaProduct.setFullCategoryPath(
+            String originalCountry = elementaProduct.getZemljaPorekla().toLowerCase();
+            String englishCountry = countryMappings.get(originalCountry);
+
+            if (englishCountry != null) {
+                elementaProduct.setZemljaPorekla(englishCountry);
+                elementaProduct.setZemljaUvoza(englishCountry);
+            }
+        }
+    }
+
+    public static void sanitizeCategoryFullPath(List<EmallProduct> products) {
+        for (EmallProduct product : products) {
+            product.setFullCategoryPath(
                     "Default Category/Shop/" +
-                            elementaProduct.getNadredjenaKategorija() + "/" +
-                            elementaProduct.getPrimarnaKategorija() + "/" +
-                            elementaProduct.getSekundarnaKategorija()
+                            product.getNadredjenaKategorija() + "/" +
+                            product.getPrimarnaKategorija() + "/" +
+                            product.getSekundarnaKategorija()
             );
         }
     }
@@ -180,7 +182,7 @@ public class ElementaUtil {
         return null; // Unsupported OS
     }
 
-    public static String getImages(ElementaXMLProduct elementaXMLProduct) {
+    public static String getImages(ElementaProduct elementaXMLProduct) {
         List<String> imageUrls = new ArrayList<>();
 
         if (elementaXMLProduct.getSlika() != null) {
