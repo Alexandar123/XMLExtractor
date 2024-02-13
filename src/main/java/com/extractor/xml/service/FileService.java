@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.extractor.xml.util.ElementaUtil.getCellValueAsDouble;
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsInteger;
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsString;
 import static com.extractor.xml.util.ElementaUtil.sanitizeCategoryFullPath;
@@ -77,6 +78,7 @@ public class FileService {
                                     .primarnaKategorija(getCellValueAsString(row.getCell(6)))
                                     .sekundarnaKategorija(getCellValueAsString(row.getCell(8)))
                                     .sifraDobavljaca(getCellValueAsString(row.getCell(9)))
+                                    .maloprodajnaCena(getCellValueAsDouble(row.getCell(10)))
                                     .build());
                 }
                 sanitizeCategoryFullPath(products);
@@ -85,7 +87,7 @@ public class FileService {
             workbook.close();
         } catch (IOException e) {
             log.error("Error during read data from excel: " + e.getMessage());
-            throw new IOException("Error duriing read data from excel: {}", e);
+            throw new IOException("Error during read data from excel: {}", e);
         }
         return products;
     }

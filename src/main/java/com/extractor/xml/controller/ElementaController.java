@@ -2,7 +2,6 @@ package com.extractor.xml.controller;
 
 import com.extractor.xml.model.ElementaProduct;
 import com.extractor.xml.service.FileService;
-import com.extractor.xml.util.EmallUtil;
 import com.extractor.xml.vendor.ElementaVendor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,9 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.extractor.xml.util.EmallUtil.createFileName;
 import static com.extractor.xml.vendor.ElementaVendor.getCSVHeadersWithSpecifications;
 
 @RestController
@@ -43,19 +42,18 @@ public class ElementaController {
                                                                      @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>elementa_products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "elementa_products") String fileName,
                                                                      @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog elementa I.E. ako je skip 3 preskacu se prva tri elementa iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
                                                                      @Parameter(description = "Limit vrednost se odnosi na broj elemenata koje je potrebno obraditi. I.E. ako je limit 3 obradice se iz celog fajla samo tri elementa. Default vrednost -1 znaci da nema limita.") @RequestParam(value = "limit", required = false, defaultValue = "-1") Integer limit) {
-        log.info("CSV generation started....");
+        log.info("Elementa CSV generation started....");
         List<ElementaProduct> elementaXMLProducts = elementaVendor.readElementaProducts(elementaFile);
         List<ElementaProduct> updatedElementaData = elementaVendor.updateElementaProducts(elementaXMLProducts, emallFile);
 
         var emallCsvHeaders = getCSVHeadersWithSpecifications(updatedElementaData);
-        var csvData = EmallUtil.getCSVData(updatedElementaData, emallCsvHeaders, skip, limit);
+        var csvData = elementaVendor.getCSVData(updatedElementaData, emallCsvHeaders, skip, limit);
         log.info("csvData size = " + csvData.size());
 
         byte[] fileContent = fileService.generateCsv(emallCsvHeaders, csvData);
         if (fileContent != null) {
-            var fullFileName = fileName + "-" + LocalDateTime.now() + ".csv";
             return ResponseEntity.ok()
-                    .headers(createHeaders(fullFileName, csvData.size()))
+                    .headers(createHeaders(createFileName(fileName), csvData.size()))
                     .contentLength(fileContent.length)
                     .contentType(MediaType.parseMediaType("application/csv"))
                     .body(new ByteArrayResource(fileContent));

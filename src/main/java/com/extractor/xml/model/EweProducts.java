@@ -59,6 +59,8 @@ public class EweProducts extends Product {
         private int anPaymentAdvance;
         private String acProductDescription;
         private List<EweUrlImages> urlImages;
+        @JsonProperty
+        private String fullCategoryPath;
     }
 
     @Data
