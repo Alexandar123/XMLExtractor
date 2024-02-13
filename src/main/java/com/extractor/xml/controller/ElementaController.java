@@ -19,11 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,37 +40,28 @@ public class ElementaController {
                     "<br><br><b>Elementa fajl treba da bude pripremljen bez naslova(header-a)</b>")
     public ResponseEntity<ByteArrayResource> generateCsvWithResponse(@RequestParam("emall_excel_file") MultipartFile emallFile,
                                                                      @RequestParam("elementa_xml_file") MultipartFile elementaFile,
-                                                                     @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "products") String fileName,
+                                                                     @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>elementa_products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "elementa_products") String fileName,
                                                                      @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog elementa I.E. ako je skip 3 preskacu se prva tri elementa iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
                                                                      @Parameter(description = "Limit vrednost se odnosi na broj elemenata koje je potrebno obraditi. I.E. ako je limit 3 obradice se iz celog fajla samo tri elementa. Default vrednost -1 znaci da nema limita.") @RequestParam(value = "limit", required = false, defaultValue = "-1") Integer limit) {
         log.info("CSV generation started....");
         List<ElementaProduct> elementaXMLProducts = elementaVendor.readElementaProducts(elementaFile);
         List<ElementaProduct> updatedElementaData = elementaVendor.updateElementaProducts(elementaXMLProducts, emallFile);
 
-        var csvHeaders = getCSVHeadersWithSpecifications(updatedElementaData);
-        var csvData = EmallUtil.getCSVData(updatedElementaData, csvHeaders, skip, limit);
+        var emallCsvHeaders = getCSVHeadersWithSpecifications(updatedElementaData);
+        var csvData = EmallUtil.getCSVData(updatedElementaData, emallCsvHeaders, skip, limit);
         log.info("csvData size = " + csvData.size());
 
-        var fullFileName = fileName + "-" + LocalDateTime.now() + ".csv";
-        try (var baos = new ByteArrayOutputStream();
-             var fileWriter = new BufferedWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {
-
-            fileService.writeCsvToFile(fileWriter, csvHeaders);
-            for (List<String> data : csvData) {
-                fileService.writeCsvToFile(fileWriter, data);
-            }
-
-            byte[] fileContent = baos.toByteArray();
+        byte[] fileContent = fileService.generateCsv(emallCsvHeaders, csvData);
+        if (fileContent != null) {
+            var fullFileName = fileName + "-" + LocalDateTime.now() + ".csv";
             return ResponseEntity.ok()
                     .headers(createHeaders(fullFileName, csvData.size()))
                     .contentLength(fileContent.length)
                     .contentType(MediaType.parseMediaType("application/csv"))
                     .body(new ByteArrayResource(fileContent));
-
-        } catch (IOException e) {
-            log.error("Error during generating CSV: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
     private HttpHeaders createHeaders(String fileName, int size) {

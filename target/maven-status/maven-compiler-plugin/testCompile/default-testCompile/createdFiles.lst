@@ -1,1 +1,4 @@
+com/extractor/xml/client/WebAPIClientIntegrationTest.class
+com/extractor/xml/util/LogUtilTest.class
+com/extractor/xml/client/WebAPIClientTest.class
 com/extractor/xml/XmlApplicationTests.class

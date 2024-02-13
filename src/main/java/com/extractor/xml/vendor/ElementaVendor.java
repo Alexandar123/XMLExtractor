@@ -3,7 +3,6 @@ package com.extractor.xml.vendor;
 import com.extractor.xml.model.ElementaProduct;
 import com.extractor.xml.model.EmallProduct;
 import com.extractor.xml.service.FileService;
-import com.extractor.xml.util.EmallUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,7 @@ import static com.extractor.xml.util.ElementaUtil.replaceDiacritics;
 import static com.extractor.xml.util.ElementaUtil.sanitazeAttributeName;
 import static com.extractor.xml.util.ElementaUtil.sanitizeCountry;
 import static com.extractor.xml.util.ElementaUtil.setFullCategory;
+import static com.extractor.xml.util.EmallUtil.getCSVHeaders;
 
 @Service
 @Slf4j
@@ -34,7 +34,7 @@ public class ElementaVendor {
     private FileService fileService;
 
     public static List<String> getCSVHeadersWithSpecifications(List<ElementaProduct> products) {
-        List<String> csvHeader = new ArrayList<>(EmallUtil.getCSVHeaders());
+        var csvHeader = new ArrayList<>(getCSVHeaders());
 
         for (ElementaProduct product : products) {
             Map<String, String> specifications = product.getSpecifications();
@@ -51,8 +51,9 @@ public class ElementaVendor {
 
     /**
      * Correlate Emall products with vendor (Elementa) products to extract vendor data and create a list of products.
+     *
      * @param elementaXMLProducts - list of elementa products
-     * @param file - emall excel file
+     * @param file                - emall excel file
      * @return elementaXMLProducts - list of updated and ready for import products
      */
     public List<ElementaProduct> updateElementaProducts(List<ElementaProduct> elementaXMLProducts, MultipartFile file) {
@@ -60,7 +61,7 @@ public class ElementaVendor {
 
         for (ElementaProduct xmlProduct : elementaXMLProducts) {
             for (EmallProduct product : products) {
-                if (xmlProduct.getElementaId() == product.getElementaId()) {
+                if (xmlProduct.getElementaId() == product.getVendorId()) {
                     xmlProduct.setSkuId(product.getSkuId());
                     xmlProduct.setFullCategoryPath(
                             setFullCategory(product.getNadredjenaKategorija(), product.getPrimarnaKategorija(), product.getSekundarnaKategorija()));
@@ -74,6 +75,7 @@ public class ElementaVendor {
 
     /**
      * Extract excel data from vendor(Elementa) and map it to POJO
+     *
      * @param elementaXMLFile - excel file with Elementa structur
      * @return elementaXMLProductList - list of Elementa POJO
      */

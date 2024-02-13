@@ -17,7 +17,7 @@ import static com.extractor.xml.util.ElementaUtil.validate;
 public class EmallUtil {
 
     public static List<String> getCSVHeaders() {
-        // Define the CSV header
+        // Define the CSV header for E-mall file
         return Arrays.asList(
                 "sku", "store_view_code", "attribute_set_code", "product_type", "categories", "product_websites",
                 "name", "description", "short_description", "weight", "product_online", "tax_class_name",

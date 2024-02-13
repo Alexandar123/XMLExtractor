@@ -11,9 +11,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EmallProduct {
+public class EmallProduct extends Product {
     private int skuId;
-    private int elementaId;
+    private int vendorId; //ElementaId Or EweId...
     private String name;
     private String uvoznik;
     private String zemljaPorekla;

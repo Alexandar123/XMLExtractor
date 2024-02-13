@@ -2,14 +2,16 @@ package com.extractor.xml.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ElementaProduct {
+public class ElementaProduct extends Product {
     private int skuId;
     private int elementaId;
     private String opis;
