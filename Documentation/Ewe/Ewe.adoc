@@ -1,0 +1,9 @@
+= Ewe product imports
+
+== If we want to import Ewe products we need to do next:
+1. Start app swagger
+2. Import E-mall excell file which contains SKU and classifications and prices
+3. We will fetch Ewe url to retrieve all products but we can't download image directly from url
+4. Behind the scene we will download images into configured local directory
+5. Copy images to FTP server under /var/import/images/ewe directory
+6. Import generated CSV file and specify "Images File Directory" to be "ewe"

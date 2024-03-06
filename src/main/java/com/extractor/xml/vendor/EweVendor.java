@@ -1,20 +1,27 @@
 package com.extractor.xml.vendor;
 
+import com.extractor.xml.ImageDownloader;
 import com.extractor.xml.client.WebAPIClient;
 import com.extractor.xml.model.EmallProduct;
 import com.extractor.xml.model.EweProducts;
 import com.extractor.xml.service.FileService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.extractor.xml.util.ElementaUtil.checkManufactureData;
+import static com.extractor.xml.util.ElementaUtil.constructUrlKey;
 import static com.extractor.xml.util.ElementaUtil.setFullCategory;
 import static com.extractor.xml.util.ElementaUtil.validate;
 import static com.extractor.xml.util.EmallUtil.getCSVHeaders;
@@ -27,6 +34,7 @@ public class EweVendor {
     private WebAPIClient client;
     private FileService fileService;
     private static final String EWE_API_URL = "http://apicatalog.ewe.rs:5001/api/?user=infoTWj&secretcode=96928&images=1&currency=rsd";
+    private static final Map<String, EweProducts> cache = new HashMap<>();
 
     /**
      * Read Ewe products from link, formatt specifications and update Ewe products with skuId, categories, name and price
@@ -36,11 +44,23 @@ public class EweVendor {
      */
     public EweProducts getEweProducts(MultipartFile file) {
         log.info("Fetch EWE products from URL: " + EWE_API_URL + " STARTED!");
+        if (cache.containsKey(EWE_API_URL)) {
+            log.info("Fetching from cache...");
+            EweProducts cachedProducts = cache.get(EWE_API_URL);
+            enrichSpecifications(cachedProducts);
+            return updateEweProducts(cachedProducts, file);
+        }
+
+        // Fetch from API if not in cache
+        log.info("Fetching from url. Not Found In Cache...");
         var eweProducts = (EweProducts) client.getProducts(EWE_API_URL, EweProducts.class);
         enrichSpecifications(eweProducts);
+
+        // Cache the response
+        cache.put(EWE_API_URL, eweProducts);
+
         return updateEweProducts(eweProducts, file);
     }
-
 
     private void enrichSpecifications(EweProducts products) {
         products.getProducts()
@@ -53,7 +73,7 @@ public class EweVendor {
         for (int i = 0; i < eweProducts.getProducts().size(); i++) {
             EweProducts.EweProduct eweProduct = eweProducts.getProducts().get(i);
             for (EmallProduct emallProduct : products) {
-                if (eweProduct.getAnProductKey() == emallProduct.getVendorId()) {
+                if (Objects.equals(eweProduct.getId(), String.valueOf(emallProduct.getVendorId()))) {
                     eweProduct.setSkuId(emallProduct.getSkuId());
                     eweProduct.setFullCategoryPath(
                             setFullCategory(emallProduct.getNadredjenaKategorija(), emallProduct.getPrimarnaKategorija(), emallProduct.getSekundarnaKategorija()));
@@ -63,7 +83,34 @@ public class EweVendor {
                 }
             }
         }
+        sanitizeCountry(eweProducts.getProducts());
         return eweProducts;
+    }
+
+    public static void sanitizeCountry(List<EweProducts.EweProduct> eweProducts) {
+        Map<String, String> countryMappings = new HashMap<>();
+        countryMappings.put("kina", "Kina");
+        countryMappings.put("nemačka", "Nemačka");
+        countryMappings.put("nemacka", "Nemačka");
+        countryMappings.put("madarska", "Mađarska");
+        countryMappings.put("usa", "Sjedinjene Države");
+        countryMappings.put("sad", "Sjedinjene Države");
+        countryMappings.put("vietnam", "Vijetnam");
+        countryMappings.put("engleska", "Ujedinjeno Kraljevstvo");
+        countryMappings.put("taiwan", "Tajvan");
+        countryMappings.put("norveska", "Norveška");
+        countryMappings.put("latvija", "Litvanija");
+        countryMappings.put("Latvija", "Litvanija");
+        countryMappings.put("V.Britanija", "Ujedinjeno Kraljevstvo");
+
+        for (EweProducts.EweProduct eweProduct : eweProducts) {
+            String originalCountry = eweProduct.getAcCountry().toLowerCase();
+            String englishCountry = countryMappings.get(originalCountry);
+
+            if (englishCountry != null) {
+                eweProduct.setAcCountry(englishCountry);
+            }
+        }
     }
 
     private void formatInlineSpecification(EweProducts.EweProduct product) {
@@ -85,6 +132,7 @@ public class EweVendor {
     public List<List<String>> getAndMapToCSVData(EweProducts eweProducts, int skip, int limit) {
         var csvHeader = getCSVHeaders();
         Stream<EweProducts.EweProduct> productsStream = eweProducts.getProducts().stream()
+                .filter(eweProduct -> !StringUtils.isEmpty(eweProduct.getFullCategoryPath()) && !eweProduct.getFullCategoryPath().contains("#N/A"))
                 .skip(skip);
 
         if (limit != -1) {
@@ -144,11 +192,7 @@ public class EweVendor {
                 case "dimensions":
                 case "ocena_usaglasenosti":
                 case "uputstvo":
-                case "barkod":
-                case "supplier_code": //??????????
                 case "http_link": //??????????
-                case "categories": //??????????
-                case "tip_proizvoda": //??????????
                 case "notify_on_stock_below":
                     value = "";
                     break;
@@ -187,9 +231,9 @@ public class EweVendor {
                 case "use_config_deferred_stock_update":
                     value = "1";
                     break;
-//                case "categories":
-//                    value = constructUrlKey(eweProduct.getFullCategoryPath());
-//                    break;
+                case "categories":
+                    value = constructUrlKey(eweProduct.getFullCategoryPath());
+                    break;
                 case "url_key":
                     value = "";
                     break;
@@ -197,7 +241,10 @@ public class EweVendor {
                     value = validate(eweProduct.getAcName());
                     break;
                 case "description":
-                    value = validate(eweProduct.getAcProductDescription()) + "\n\n" + eweProduct.getAcInlineSpecification();
+                    value = getDescription(eweProduct);
+                    break;
+                case "tip_proizvoda":
+                    value = validate(eweProduct.getAcSubCategory());
                     break;
                 case "tax_class_name":
                     value = "Taxable Goods";
@@ -205,6 +252,8 @@ public class EweVendor {
                 case "visibility":
                     value = "Catalog, Search";
                     break;
+                case "supplier_code":
+                case "barkod":
                 case "ean_code":
                     value = validate(eweProduct.getAcEan());
                     break;
@@ -212,7 +261,7 @@ public class EweVendor {
                     value = String.valueOf(eweProduct.getAnPrice());
                     break;
                 case "country_of_manufacture":
-                    value = validate(eweProduct.getAcCountry());
+                    value = getCountry(eweProduct.getAcCountry());
                     break;
                 case "qty":
                     value = String.valueOf(eweProduct.getAnStock());
@@ -229,11 +278,11 @@ public class EweVendor {
                 case "additional_images":
                     value = getImages(eweProduct);
                     break;
-                case "base":
-                case "thumbnail":
+                case "base_image":
+                case "thumbnail_image":
                 case "small_image":
                 case "swatch_images":
-                    value = (eweProduct.getUrlImages() != null && !eweProduct.getUrlImages().isEmpty()) ? validate(eweProduct.getUrlImages().get(0).getAcImage()) : null;
+                    value = getImage(eweProduct);
                     break;
                 case "brend":
                     value = validate(eweProduct.getAcDept());
@@ -245,11 +294,63 @@ public class EweVendor {
         return rowData;
     }
 
-    private static String getImages(EweProducts.EweProduct eweProduct) {
-        List<String> imageUrls = new ArrayList<>();
-        eweProduct.getUrlImages()
-                .forEach(it -> imageUrls.add(it.getAcImage()));
-
-        return String.join(",", imageUrls);
+    private static String getCountry(String acCountry) {
+        if (acCountry == null || acCountry.isEmpty()) {
+            return "Kina";
+        }
+        return validate(acCountry);
     }
+
+    private static String getDescription(EweProducts.EweProduct eweProduct) {
+        String productDescription = Optional.ofNullable(eweProduct.getAcProductDescription()).orElse("");
+        String inlineSpecification = Optional.ofNullable(eweProduct.getAcInlineSpecification()).orElse("");
+//        String seoDescription = eweProduct.getUrlImages().stream()
+//                .findFirst()
+//                .map(EweProducts.EweUrlImages::getAcSeoDescription)
+//                .orElse("");
+
+        return Stream.of(!StringUtils.isEmpty(productDescription) ? productDescription + "<br><br>" : "", inlineSpecification)
+                .filter(desc -> !desc.isEmpty())
+                .collect(Collectors.joining("\n\n"));
+    }
+
+    private static String getImages(EweProducts.EweProduct eweProduct) {
+        return eweProduct.getUrlImages()
+                .stream()
+                .filter(it -> {
+                    String image = it.getAcImage();
+                    return image.endsWith(".jpg") || image.endsWith(".jpeg") || image.endsWith(".png")
+                            || image.endsWith(".gif") || image.endsWith(".bmp") || image.endsWith(".svg");
+                })
+                .map(imageUrl -> {
+                    ImageDownloader.downloadImage(imageUrl.getAcImage());
+                    String[] parts = imageUrl.getAcImage().split("/");
+                    return parts[parts.length - 1];
+                })
+                .collect(Collectors.joining(","));
+    }
+
+    private static String getImage(EweProducts.EweProduct eweProduct) {
+        var urlImages = eweProduct.getUrlImages();
+        if (urlImages != null && !urlImages.isEmpty()) {
+            var image = urlImages.get(0).getAcImage();
+            if (image.endsWith(".jpg") || image.endsWith(".jpeg") || image.endsWith(".png")
+                    || image.endsWith(".gif") || image.endsWith(".bmp") || image.endsWith(".svg")) {
+                String validated = validate(urlImages.get(0).getAcImage());
+                String[] parts = validated.split("/");
+                return parts[parts.length - 1];
+            }
+        }
+        return null;
+    }
+
+//    private static void downloadImages(EweProducts.EweProduct eweProduct) {
+//        eweProduct.getUrlImages().forEach(it -> {
+//            String imageUrl = it.getAcImage();
+//            if (imageUrl.endsWith(".jpg") || imageUrl.endsWith(".jpeg") || imageUrl.endsWith(".png")
+//                    || imageUrl.endsWith(".gif") || imageUrl.endsWith(".bmp") || imageUrl.endsWith(".svg")) {
+//                ImageDownloader.downloadImage(imageUrl);
+//            }
+//        });
+//    }
 }

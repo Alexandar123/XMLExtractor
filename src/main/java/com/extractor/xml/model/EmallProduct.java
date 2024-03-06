@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 public class EmallProduct extends Product {
     private int skuId;
-    private int vendorId; //ElementaId Or EweId...
+    private String vendorId; //ElementaId Or EweId...
     private String name;
     private String uvoznik;
     private String zemljaPorekla;

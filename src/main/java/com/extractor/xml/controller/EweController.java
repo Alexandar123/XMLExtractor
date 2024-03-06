@@ -32,9 +32,14 @@ public class EweController {
 
     @PostMapping(value = "/ewe/generate-csv", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @Operation(summary = "Convert products from ewe format into E-mall Magento specific csv file.", description =
-            "Obavezna pravila: E-mall fajl mora biti pripremljen sa <b>SKU</b>, <b>EweId</b> i <b>category putanjama</b> prema kojima ce se ewe proizvodi uvezati u sistem i to sledecim redom: \n" +
-                    "1. SKU \n 2. EweId \n 3. Category path \n" +
-                    "<br><br><b>Ewe fajl treba da bude pripremljen bez naslova(header-a)</b>")
+            """
+            Obavezna pravila: E-mall fajl mora biti pripremljen sa <b>SKU</b>, <b>EweId</b> i <b>category putanje</b> prema kojima ce se ewe proizvodi uvezati u sistem i to sledecim redom:
+            1. SKU
+            2. EweId
+            3. Category path
+            
+            <br><br><b>Ewe fajl treba da bude pripremljen bez naslova(header-a)</b>
+            """)
     public ResponseEntity<ByteArrayResource> generateCsvWithResponse(@RequestParam("emall_excel_file") MultipartFile emallFile,
                                                                      @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>ewe_products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "ewe_products") String fileName,
                                                                      @Parameter(description = "Skip vrednost se odnosi na broj elemenata koji ce se preskociti u obradi pocevsi od prvog ewe I.E. ako je skip 3 preskacu se prva tri ewe iz fajla. Default vrednost 0 znaci da se svi elementi obradjuju") @RequestParam(value = "skip", required = false, defaultValue = "0") Integer skip,
@@ -43,8 +48,10 @@ public class EweController {
         long startTime = System.currentTimeMillis();
 
         var eweProducts = eweVendor.getEweProducts(emallFile);
-        var csvData = eweVendor.getAndMapToCSVData(eweProducts, skip, limit);
+        var updatedEweData = eweVendor.updateEweProducts(eweProducts, emallFile);
+        var csvData = eweVendor.getAndMapToCSVData(updatedEweData, skip, limit);
 
+        log.info("Ewe original size = " + eweProducts.getProducts().size());
         log.info("csvData size = " + csvData.size());
 
         byte[] fileContent = fileService.generateCsv(EmallUtil.getCSVHeaders(), csvData);

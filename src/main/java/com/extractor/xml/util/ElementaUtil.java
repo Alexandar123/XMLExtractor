@@ -70,6 +70,8 @@ public class ElementaUtil {
         countryMappings.put("engleska", "Ujedinjeno Kraljevstvo");
         countryMappings.put("taiwan", "Tajvan");
         countryMappings.put("norveska", "Norveška");
+        countryMappings.put("latvija", "Litvanija");
+        countryMappings.put("Latvija", "Litvanija");
 
         for (ElementaProduct elementaProduct : elementaProducts) {
             String originalCountry = elementaProduct.getZemljaPorekla().toLowerCase();

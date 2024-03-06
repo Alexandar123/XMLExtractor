@@ -34,9 +34,14 @@ public class ElementaController {
 
     @PostMapping(value = "/elementa/generate-csv", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @Operation(summary = "Convert products from elementa format into E-mall Magento specific csv file.", description =
-            "Obavezna pravila: E-mall fajl mora biti pripremljen sa <b>SKU</b>, <b>ElementaId</b> i <b>category putanjama</b> prema kojima ce se Elementa proizvodi uvezati u sistem i to sledecim redom: \n" +
-                    "1. SKU \n 2. ElementaId \n 3. Category path \n" +
-                    "<br><br><b>Elementa fajl treba da bude pripremljen bez naslova(header-a)</b>")
+            """
+            Obavezna pravila: E-mall fajl mora biti pripremljen sa <b>SKU</b>, <b>ElementaId</b> i <b>category putanjama</b> prema kojima ce se Elementa proizvodi uvezati u sistem i to sledecim redom:
+            1. SKU
+            2. ElementaId
+            3. Category path
+            
+            <br><br><b>Elementa fajl treba da bude pripremljen bez naslova(header-a)</b>
+            """)
     public ResponseEntity<ByteArrayResource> generateCsvWithResponse(@RequestParam("emall_excel_file") MultipartFile emallFile,
                                                                      @RequestParam("elementa_xml_file") MultipartFile elementaFile,
                                                                      @Parameter(description = "Naziv za CSV fajl koji ce biti generisan u E-mall Magento formatu. Default naziv je <b>elementa_products-trenutniDatumIVreme.csv</b>") @RequestParam(value = "fileName", required = false, defaultValue = "elementa_products") String fileName,

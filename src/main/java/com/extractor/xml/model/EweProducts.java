@@ -19,6 +19,8 @@ public class EweProducts extends Product {
 
     @Data
     public static class EweProduct {
+        @JsonProperty("_id")
+        private String id;
         private int skuId;
         private int anProductKey;//ID artikla
         private String acProduct;//Sifra artikla

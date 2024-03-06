@@ -67,7 +67,7 @@ public class ElementaVendor {
 
         for (ElementaProduct xmlProduct : elementaXMLProducts) {
             for (EmallProduct product : products) {
-                if (xmlProduct.getElementaId() == product.getVendorId()) {
+                if (xmlProduct.getElementaId() == Integer.parseInt(product.getVendorId())) {
                     xmlProduct.setSkuId(product.getSkuId());
                     xmlProduct.setFullCategoryPath(
                             setFullCategory(product.getNadredjenaKategorija(), product.getPrimarnaKategorija(), product.getSekundarnaKategorija()));
@@ -336,7 +336,7 @@ public class ElementaVendor {
                     break;
                 case "product_websites":
                 case "websites":
-                    value = "base";
+                    value = "base_image";
                     break;
                 case "name":
                     value = validate(elementaXMLProduct.getNaziv());
@@ -402,8 +402,8 @@ public class ElementaVendor {
                 case "additional_images":
                     value = getImages(elementaXMLProduct);
                     break;
-                case "base":
-                case "thumbnail":
+                case "base_image":
+                case "thumbnail_image":
                 case "small_image":
                 case "swatch_images":
                     value = validate(elementaXMLProduct.getSlika());

@@ -19,6 +19,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.extractor.xml.util.ElementaUtil.getCellValueAsDouble;
@@ -33,10 +34,17 @@ public class FileService {
 
     public void writeCsvToFile(BufferedWriter fileWriter, List<String> data) throws IOException {
         fileWriter.write(data.stream()
-                .map(value -> "\"" + value.replace("\"", "'") + "\"")
+                .map(value -> "\"" + Objects.requireNonNullElse(value, "").replace("\"", "'") + "\"")
                 .collect(Collectors.joining(",")));
         fileWriter.newLine();
     }
+
+//    public void writeCsvToFile(BufferedWriter fileWriter, List<String> data) throws IOException {
+//        fileWriter.write(data.stream()
+//                .map(value -> "\"" + value.replace("\"", "'") + "\"")
+//                .collect(Collectors.joining(",")));
+//        fileWriter.newLine();
+//    }
 
     public byte[] generateCsv(List<String> csvHeaders, List<List<String>> csvData) {
         try (var baos = new ByteArrayOutputStream();
@@ -73,7 +81,7 @@ public class FileService {
                             EmallProduct.builder()
                                     .skuId(getCellValueAsInteger(row.getCell(0)))
                                     .name(getCellValueAsString(row.getCell(1)))
-                                    .vendorId(getCellValueAsInteger(row.getCell(2)))
+                                    .vendorId(getCellValueAsString(row.getCell(2)))
                                     .nadredjenaKategorija(getCellValueAsString(row.getCell(4)))
                                     .primarnaKategorija(getCellValueAsString(row.getCell(6)))
                                     .sekundarnaKategorija(getCellValueAsString(row.getCell(8)))

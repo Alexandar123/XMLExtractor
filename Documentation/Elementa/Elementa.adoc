@@ -1,0 +1,7 @@
+= Elementa products
+If you want to import elementa products you need to fetch XML file from elementa:
+1. Start app swagger
+2. Import E-mall excell file which contains SKU and classifications
+3. Import Elementa xml file which is actually elementa products
+4. Generate CSV file
+5. Import into magento

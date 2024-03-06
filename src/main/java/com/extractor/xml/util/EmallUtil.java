@@ -25,7 +25,7 @@ public class EmallUtil {
                 "deferred_stock_update", "use_config_deferred_stock_update", "related_skus", "crosssell_skus", "upsell_skus", "hide_from_product_page",
                 "custom_options", "associated_skus", "ean_code", "manufacturer", "commodity_group_code", "supplier",
                 "supplier_code", "sector", "http_link", "width", "height", "depth", "dimensions",
-                "additional_images", "base", "thumbnail", "small_image", "swatch_images",
+                "additional_images", "base_image", "thumbnail_image", "small_image", "swatch_images",
                 "tip_proizvoda", "brend", "websites", "uputstvo", "ocena_usaglasenosti", "barkod"
         );
     }
