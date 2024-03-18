@@ -15,6 +15,10 @@ import java.nio.file.Paths;
 public class ImageDownloader {
 
     private static final String DOWNLOAD_FOLDER = "/home/intv0016/Desktop/slike/test";
+    private static final String DOWNLOAD_FOLDER_TODAY = "/home/intv0016/Desktop/slike/18032024";
+    private static int counter = 1;
+
+    private ImageDownloader() {}
 
     public static void downloadImage(String imageUrl) {
         downloadImage(imageUrl, DOWNLOAD_FOLDER);
@@ -33,8 +37,9 @@ public class ImageDownloader {
             }
 
             try (InputStream in = url.openStream()) {
-                Files.copy(in, savePath);
-                log.info("Image downloaded successfully to: " + savePath);
+                Path savePathToday = Paths.get(DOWNLOAD_FOLDER_TODAY, fileName);
+                Files.copy(in, savePathToday);
+                log.info(counter++ + " image downloaded successfully to: " + savePathToday);
             } catch (IOException e) {
                 log.error("Error downloading image: " + e.getMessage());
             }
